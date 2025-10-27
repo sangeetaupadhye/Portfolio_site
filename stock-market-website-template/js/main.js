@@ -1,136 +1,92 @@
-(function ($) {
-    "use strict";
+// ---------- PRELOADER (spinner) ----------
+window.addEventListener('load', () => {
+  const pre = document.getElementById('preloader');
+  if(pre) setTimeout(()=> { pre.style.display = 'none'; }, 250);
+  // run initial visibility checks
+  revealOnScroll();
+  setActiveNav();
+});
 
-    // Spinner
-    var spinner = function () {
-        setTimeout(function () {
-            if ($('#spinner').length > 0) {
-                $('#spinner').removeClass('show');
-            }
-        }, 1);
-    };
-    spinner(0);
-    
-    
-    // Initiate the wowjs
-    new WOW().init();
+// ---------- SMOOTH SCROLL + MOBILE COLLAPSE ----------
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', function(e){
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // Sticky Navbar
-    $(window).scroll(function () {
-        if ($(this).scrollTop() > 45) {
-            $('.navbar').addClass('sticky-top shadow-sm');
-        } else {
-            $('.navbar').removeClass('sticky-top shadow-sm');
-        }
-    });
-
-
-    // Hero Header carousel
-    $(".header-carousel").owlCarousel({
-        animateOut: 'fadeOut',
-        items: 1,
-        margin: 0,
-        stagePadding: 0,
-        autoplay: true,
-        smartSpeed: 500,
-        dots: true,
-        loop: true,
-        nav : true,
-        navText : [
-            '<i class="bi bi-arrow-left"></i>',
-            '<i class="bi bi-arrow-right"></i>'
-        ],
-    });
-
-
-    // attractions carousel
-    $(".blog-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1500,
-        center: false,
-        dots: false,
-        loop: true,
-        margin: 25,
-        nav : true,
-        navText : [
-            '<i class="fa fa-angle-right"></i>',
-            '<i class="fa fa-angle-left"></i>'
-        ],
-        responsiveClass: true,
-        responsive: {
-            0:{
-                items:1
-            },
-            576:{
-                items:1
-            },
-            768:{
-                items:2
-            },
-            992:{
-                items:2
-            },
-            1200:{
-                items:3
-            }
-        }
-    });
-
-
-    // testimonial carousel
-    $(".testimonial-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1500,
-        center: false,
-        dots: true,
-        loop: true,
-        margin: 25,
-        nav : true,
-        navText : [
-            '<i class="fa fa-angle-right"></i>',
-            '<i class="fa fa-angle-left"></i>'
-        ],
-        responsiveClass: true,
-        responsive: {
-            0:{
-                items:1
-            },
-            576:{
-                items:1
-            },
-            768:{
-                items:2
-            },
-            992:{
-                items:2
-            },
-            1200:{
-                items:3
-            }
-        }
-    });
-
-
-    // Facts counter
-    $('[data-toggle="counter-up"]').counterUp({
-        delay: 5,
-        time: 2000
-    });
-
-
-   // Back to top button
-   $(window).scroll(function () {
-    if ($(this).scrollTop() > 300) {
-        $('.back-to-top').fadeIn('slow');
-    } else {
-        $('.back-to-top').fadeOut('slow');
+    // collapse mobile menu if open
+    const bsCollapse = document.querySelector('.navbar-collapse');
+    if(bsCollapse && bsCollapse.classList.contains('show')){
+      new bootstrap.Collapse(bsCollapse).toggle();
     }
-    });
-    $('.back-to-top').click(function () {
-        $('html, body').animate({scrollTop: 0}, 1500, 'easeInOutExpo');
-        return false;
-    });
+  });
+});
 
+// ---------- ACTIVE NAV ON SCROLL ----------
+const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+const sections  = navLinks.map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
 
-})(jQuery);
+function setActiveNav(){
+  const pos = window.scrollY + 140;
+  for(let i=0;i<sections.length;i++){
+    const sec = sections[i];
+    if(!sec) continue;
+    if(sec.offsetTop <= pos && sec.offsetTop + sec.offsetHeight > pos){
+      navLinks.forEach(n => n.classList.remove('active'));
+      navLinks[i].classList.add('active');
+    }
+  }
+}
+window.addEventListener('scroll', setActiveNav);
+setActiveNav();
 
+// ---------- NAVBAR SCROLL STYLE ----------
+const navbar = document.querySelector('.navbar');
+window.addEventListener('scroll', () => {
+  if(window.scrollY > 40) navbar.classList.add('nav-scrolled');
+  else navbar.classList.remove('nav-scrolled');
+});
+
+// ---------- REVEAL ON SCROLL (fade-in) ----------
+const fadeTargets = Array.from(document.querySelectorAll('.section, .service-card, .portfolio-card, .hero-section, .contact-box, .story-img'));
+
+function revealOnScroll(){
+  const trigger = window.innerHeight - 120;
+  fadeTargets.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if(rect.top < trigger) el.classList.add('visible', 'fade-in');
+  });
+}
+window.addEventListener('scroll', revealOnScroll);
+window.addEventListener('resize', revealOnScroll);
+
+// ---------- SCROLL TO TOP BUTTON ----------
+const topBtn = document.createElement('button');
+topBtn.className = 'scroll-top-btn';
+topBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+document.body.appendChild(topBtn);
+
+topBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+window.addEventListener('scroll', () => {
+  if(window.scrollY > 420) topBtn.classList.add('show');
+  else topBtn.classList.remove('show');
+});
+
+// ---------- SEND EMAIL (prefill mailto) ----------
+function htmlEscape(s){ return s ? encodeURIComponent(s) : ''; }
+window.sendEmail = function(){
+  const name = htmlEscape(document.getElementById('name')?.value || '');
+  const email = htmlEscape(document.getElementById('email')?.value || '');
+  const msg = htmlEscape(document.getElementById('message')?.value || '');
+  const subject = `SociSphere enquiry from ${name || email || 'website'}`;
+  const body = `Name: ${decodeURIComponent(name)}%0AEmail: ${decodeURIComponent(email)}%0A%0A${decodeURIComponent(msg)}%0A%0A--%0ASent from SociSphere website`;
+  const to = 'info@example.com';
+  window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+// Expose for debugging if needed
+window.soci_reveal = revealOnScroll;
